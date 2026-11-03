@@ -19,7 +19,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install duckdb==1.5.6 pandas "dbt-duckdb>=1.7.0"
+          pip install duckdb==1.5.6 pandas "dbt-duckdb>=1.7.0" kagglehub
 
       - name: 1. Run Data Ingestion (Bronze Layer)
         env:
