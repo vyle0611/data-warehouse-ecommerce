@@ -3,5 +3,5 @@ ecommerce_dbt:
   outputs:
     dev:
       type: duckdb
-      path: "md:ecommerce_db?token={{ env_var('MOTHERDUCK_TOKEN') }}"
+      path: "md:eccomerce_db?token={{ env_var('MOTHERDUCK_TOKEN') }}"
       threads: 4
