@@ -24,6 +24,7 @@ jobs:
       - name: 1. Run Data Ingestion (Bronze Layer)
         env:
           MOTHERDUCK_TOKEN: ${{ secrets.MOTHERDUCK_TOKEN }}
+          KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
         run: python ingest.py
 
       - name: 2. Run dbt Transformation (Silver & Gold Layers)
