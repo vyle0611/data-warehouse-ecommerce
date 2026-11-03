@@ -16,7 +16,7 @@ def get_db_connection():
     return duckdb.connect(f"md:ecommerce_db?token={MOTHERDUCK_TOKEN}")
 
 if MOTHERDUCK_TOKEN:
-    con = get_db_connection()
+    con = duckdb.connect(f"md:eccomerce_db?token={MOTHERDUCK_TOKEN}")
     
     # 2. Query dữ liệu Doanh thu tầng Bronze/Gold
     try:
