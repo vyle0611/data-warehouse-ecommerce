@@ -75,7 +75,7 @@ try:
                 with st.spinner("Llama 3 đang phân tích..."):
                     response = groq_client.chat.completions.create(
                         messages=[{"role": "user", "content": prompt}],
-                        model="llama-3.3-70b-versatile"
+                        model="llama-3.1-8b-instant"
                     )
                     st.write("### Kết quả Phân tích:")
                     st.write(response.choices[0].message.content)
