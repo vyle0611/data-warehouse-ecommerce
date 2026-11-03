@@ -1,33 +1,36 @@
 import os
+import glob
 import duckdb
+import kagglehub
 
+# Kagglehub tự động nhận biến KAGGLE_API_TOKEN từ môi trường
+os.environ["KAGGLE_API_TOKEN"] = os.getenv("KAGGLE_API_TOKEN", "")
+
+# Tải bộ dữ liệu cuộc thi từ Kaggle
+print("Downloading competition files via kagglehub...")
+download_path = kagglehub.competition_download("datathon-2026-round-1")
+print("Path to competition files:", download_path)
+
+# Kết nối MotherDuck
 MOTHERDUCK_TOKEN = os.getenv("MOTHERDUCK_TOKEN")
-
-# 1. Kết nối tới MotherDuck
 con = duckdb.connect(f"md:?token={MOTHERDUCK_TOKEN}")
-
-# 2. Chuyển sang sử dụng database eccomerce_db đã tạo sẵn
 con.execute("USE eccomerce_db;")
 con.execute("CREATE SCHEMA IF NOT EXISTS bronze;")
 
-# 3. Nạp dữ liệu từ thư mục local dataset/
-tables = [
-    "products", "customers", "promotions", "geography", 
-    "orders", "order_items", "payments", "shipments", 
-    "returns", "reviews", "sales", "inventory", "web_traffic"
-]
+# Nạp tự động các file CSV vào tầng Bronze
+csv_files = glob.glob(os.path.join(download_path, "*.csv"))
 
-for table in tables:
-    file_path = f"dataset/{table}.csv"
-    print(f"Ingesting {file_path} into bronze.{table}...")
-    
-    if os.path.exists(file_path):
+if not csv_files:
+    print("⚠️ Không tìm thấy file CSV nào trong thư mục tải về!")
+else:
+    for file_path in csv_files:
+        table_name = os.path.splitext(os.path.basename(file_path))[0]
+        print(f"Ingesting {file_path} into bronze.{table_name}...")
+        
         con.execute(f"""
-            CREATE OR REPLACE TABLE bronze.{table} AS 
+            CREATE OR REPLACE TABLE bronze.{table_name} AS 
             SELECT * FROM read_csv_auto('{file_path}');
         """)
-    else:
-        print(f"⚠️ Cảnh báo: Không tìm thấy file {file_path}")
 
-print("✅ Ingestion completed successfully!")
+print("✅ Kagglehub Ingestion completed successfully!")
 con.close()
