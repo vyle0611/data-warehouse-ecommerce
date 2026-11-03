@@ -1,0 +1,7 @@
+ecommerce_dbt:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "md:ecommerce_db?token={{ env_var('MOTHERDUCK_TOKEN') }}"
+      threads: 4
