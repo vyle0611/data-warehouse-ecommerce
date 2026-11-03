@@ -2,12 +2,15 @@ import os
 import duckdb
 
 MOTHERDUCK_TOKEN = os.getenv("MOTHERDUCK_TOKEN")
-# Kết nối tới Cloud Lakehouse MotherDuck với DuckDB 1.5.6
-con = duckdb.connect(f"md:ecommerce_db?token={MOTHERDUCK_TOKEN}")
 
+# 1. Kết nối tới MotherDuck
+con = duckdb.connect(f"md:?token={MOTHERDUCK_TOKEN}")
+
+# 2. Chuyển sang sử dụng database eccomerce_db đã tạo sẵn
+con.execute("USE eccomerce_db;")
 con.execute("CREATE SCHEMA IF NOT EXISTS bronze;")
 
-# Danh sách 13 file CSV chính của bộ dữ liệu Thương mại điện tử
+# 3. Nạp dữ liệu từ thư mục local dataset/
 tables = [
     "products", "customers", "promotions", "geography", 
     "orders", "order_items", "payments", "shipments", 
@@ -15,12 +18,16 @@ tables = [
 ]
 
 for table in tables:
-    print(f"Ingesting table bronze.{table}...")
-    # Nạp dữ liệu thô vào tầng Bronze (Thay URL bên dưới bằng đường dẫn repository/folder chứa dữ liệu của bạn)
-    con.execute(f"""
-        CREATE OR REPLACE TABLE bronze.{table} AS 
-        SELECT * FROM read_csv_auto('https://raw.githubusercontent.com/YOUR_USERNAME/data-warehouse-ecommerce/main/dataset/{table}.csv');
-    """)
+    file_path = f"dataset/{table}.csv"
+    print(f"Ingesting {file_path} into bronze.{table}...")
+    
+    if os.path.exists(file_path):
+        con.execute(f"""
+            CREATE OR REPLACE TABLE bronze.{table} AS 
+            SELECT * FROM read_csv_auto('{file_path}');
+        """)
+    else:
+        print(f"⚠️ Cảnh báo: Không tìm thấy file {file_path}")
 
-print("Ingestion completed successfully!")
+print("✅ Ingestion completed successfully!")
 con.close()
