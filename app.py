@@ -184,7 +184,7 @@ try:
                     try:
                         response = groq_client.chat.completions.create(
                             messages=[{"role": "user", "content": full_prompt}],
-                            model="llama3-8b-8192"
+                            model="llama-3.1-8b-instant"
                         )
                         st.markdown("---")
                         st.markdown(response.choices[0].message.content)
