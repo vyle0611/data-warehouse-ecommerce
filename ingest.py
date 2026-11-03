@@ -3,21 +3,24 @@ import glob
 import duckdb
 import kagglehub
 
-# Kagglehub tự động nhận biến KAGGLE_API_TOKEN từ môi trường
+# 1. Cấu hình xác thực cho Kaggle Hub
 os.environ["KAGGLE_API_TOKEN"] = os.getenv("KAGGLE_API_TOKEN", "")
 
-# Tải bộ dữ liệu cuộc thi từ Kaggle
+# 2. Tải bộ dữ liệu cuộc thi từ Kaggle
 print("Downloading competition files via kagglehub...")
 download_path = kagglehub.competition_download("datathon-2026-round-1")
 print("Path to competition files:", download_path)
 
-# Kết nối MotherDuck
+# 3. Kết nối MotherDuck và tạo database nếu chưa tồn tại
 MOTHERDUCK_TOKEN = os.getenv("MOTHERDUCK_TOKEN")
 con = duckdb.connect(f"md:?token={MOTHERDUCK_TOKEN}")
+
+# Tự tạo database eccomerce_db nếu chưa có
+con.execute("CREATE DATABASE IF NOT EXISTS eccomerce_db;")
 con.execute("USE eccomerce_db;")
 con.execute("CREATE SCHEMA IF NOT EXISTS bronze;")
 
-# Nạp tự động các file CSV vào tầng Bronze
+# 4. Nạp tự động tất cả các file CSV tải về vào tầng Bronze
 csv_files = glob.glob(os.path.join(download_path, "*.csv"))
 
 if not csv_files:
