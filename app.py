@@ -6,34 +6,34 @@ import plotly.graph_objects as go
 from groq import Groq
 
 st.set_page_config(
-    page_title="E-Commerce Executive Dashboard", 
+    page_title="Hệ thống Báo cáo Quản trị Thương mại Điện tử", 
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
+# Custom CSS phong cách Enterprise Dashboard
 st.markdown("""
     <style>
     .stApp {
-        background-color: #fafafa;
+        background-color: #f4f5f7;
     }
-    .kpi-box {
+    .kpi-card {
         background-color: #ffffff;
-        border: 1px solid #e0e0e0;
+        border: 1px solid #dcdfe6;
         border-radius: 4px;
-        padding: 12px 16px;
-        text-align: left;
+        padding: 14px 18px;
     }
-    .kpi-title {
-        font-size: 12px;
-        color: #616161;
-        text-transform: uppercase;
+    .kpi-label {
+        font-size: 13px;
+        color: #606266;
         font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 6px;
     }
-    .kpi-value {
-        font-size: 22px;
+    .kpi-val {
+        font-size: 24px;
         font-weight: 700;
-        color: #212121;
-        margin-top: 4px;
+        color: #1f2d3d;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -46,21 +46,24 @@ def get_db_connection(token):
     return duckdb.connect(f"md:ecommerce_db?token={token}")
 
 if not MOTHERDUCK_TOKEN:
-    st.error("Thieu MOTHERDUCK_TOKEN trong Streamlit Secrets.")
+    st.error("Cấu hình MOTHERDUCK_TOKEN chưa khả dụng trong Streamlit Secrets.")
     st.stop()
 
+# Sidebar hệ thống
 with st.sidebar:
-    st.title("He thong BI")
-    st.write("Do an Data Warehouse & Analytics")
+    st.title("Báo cáo Quản trị BI")
+    st.caption("Dự án Phân tích Dữ liệu DWH & ML")
     st.divider()
-    st.subheader("Ket noi")
-    st.write("MotherDuck: Connected")
-    st.write("Groq AI: " + ("Connected" if GROQ_API_KEY else "Missing Token"))
+    
+    st.markdown("**Trạng thái hệ thống:**")
+    st.text(f"MotherDuck: Đã kết nối")
+    st.text(f"Groq API: {'Đã kết nối' if GROQ_API_KEY else 'Chưa cấu hình'}")
+    
     st.divider()
-    st.caption("Version 2.0")
+    st.caption("Phiên bản 2.1")
 
-st.title("E-Commerce Executive Dashboard & GenAI Insights")
-st.write("Phan tich diem gay tang truong, du bao doanh thu va goi y khach hang.")
+st.title("Dashboard Tổng quan Doanh số & Dự báo")
+st.write("Hệ thống theo dõi chỉ số kinh doanh, dự báo doanh thu và phân tệp gợi ý sản phẩm.")
 
 try:
     con = get_db_connection(MOTHERDUCK_TOKEN)
@@ -72,43 +75,46 @@ try:
     sales_df['sales_date'] = pd.to_datetime(sales_df['sales_date'])
     forecast_df['forecast_date'] = pd.to_datetime(forecast_df['forecast_date'])
 
-    total_revenue = sales_df['revenue'].sum()
-    avg_daily_rev = sales_df['revenue'].mean()
-    forecast_30d_rev = forecast_df['predicted_revenue'].sum()
-    total_recs = len(recs_df)
+    tot_rev = sales_df['revenue'].sum()
+    avg_rev = sales_df['revenue'].mean()
+    fc_rev = forecast_df['predicted_revenue'].sum()
+    tot_rec_cust = recs_df['customer_id'].nunique()
 
-    c1, c2, c3, c4 = st.columns(4)
-    with c1:
-        st.markdown(f'<div class="kpi-box"><div class="kpi-title">Tong Doanh Thu Lich Su</div><div class="kpi-value">${total_revenue:,.0f}</div></div>', unsafe_allow_html=True)
-    with c2:
-        st.markdown(f'<div class="kpi-box"><div class="kpi-title">Doanh Thu TB / Ngay</div><div class="kpi-value">${avg_daily_rev:,.0f}</div></div>', unsafe_allow_html=True)
-    with c3:
-        st.markdown(f'<div class="kpi-box"><div class="kpi-title">Du Bao 30 Ngay Toi</div><div class="kpi-value">${forecast_30d_rev:,.0f}</div></div>', unsafe_allow_html=True)
-    with c4:
-        st.markdown(f'<div class="kpi-box"><div class="kpi-title">So Luong Khach Hang ALS</div><div class="kpi-value">{total_recs:,}</div></div>', unsafe_allow_html=True)
+    # Thẻ KPI tổng quan
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Tổng doanh thu lịch sử</div><div class="kpi-val">${tot_rev:,.0f}</div></div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Doanh thu trung bình / ngày</div><div class="kpi-val">${avg_rev:,.0f}</div></div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Dự báo 30 ngày tiếp theo</div><div class="kpi-val">${fc_rev:,.0f}</div></div>', unsafe_allow_html=True)
+    with col4:
+        st.markdown(f'<div class="kpi-card"><div class="kpi-label">Khách hàng được gợi ý</div><div class="kpi-val">{tot_rec_cust:,}</div></div>', unsafe_allow_html=True)
 
     st.write("")
 
-    tab1, tab2, tab3 = st.tabs(["Doanh Thu & Du Bao", "Goi Y San Pham (ALS)", "GenAI Assistant"])
+    # Phân tab chức năng
+    t1, t2, t3 = st.tabs(["Doanh số & Dự báo", "Danh sách Gợi ý ALS", "Trợ lý Phân tích AI"])
 
-    with tab1:
-        st.subheader("Doanh thu thuc te va Du bao Prophet")
+    with t1:
+        st.subheader("Biểu đồ Xu hướng Doanh thu Thực tế & Dự báo")
         
         fig = go.Figure()
+        
         fig.add_trace(go.Scatter(
             x=sales_df['sales_date'], 
             y=sales_df['revenue'],
             mode='lines', 
-            name='Actual Revenue',
-            line=dict(color='#29b6f6', width=1.5)
+            name='Doanh thu thực tế',
+            line=dict(color='#1f77b4', width=1.8)
         ))
 
         fig.add_trace(go.Scatter(
             x=forecast_df['forecast_date'], 
             y=forecast_df['predicted_revenue'],
             mode='lines', 
-            name='Forecast',
-            line=dict(color='#ab47bc', width=1.5, dash='dash')
+            name='Dự báo (Prophet)',
+            line=dict(color='#ff7f0e', width=1.8, dash='dash')
         ))
 
         if 'revenue_lower_bound' in forecast_df.columns and 'revenue_upper_bound' in forecast_df.columns:
@@ -116,7 +122,7 @@ try:
                 x=pd.concat([forecast_df['forecast_date'], forecast_df['forecast_date'][::-1]]),
                 y=pd.concat([forecast_df['revenue_upper_bound'], forecast_df['revenue_lower_bound'][::-1]]),
                 fill='toself',
-                fillcolor='rgba(171, 71, 188, 0.1)',
+                fillcolor='rgba(255, 127, 14, 0.12)',
                 line=dict(color='rgba(255,255,255,0)'),
                 hoverinfo="skip",
                 showlegend=False
@@ -125,65 +131,65 @@ try:
         fig.update_layout(
             template="plotly_white",
             hovermode="x unified",
-            xaxis_title="Date",
-            yaxis_title="Revenue ($)",
+            xaxis_title="Thời gian",
+            yaxis_title="Doanh thu ($)",
             legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-            margin=dict(l=10, r=10, t=30, b=10),
-            height=420
+            margin=dict(l=15, r=15, t=35, b=15),
+            height=430
         )
         st.plotly_chart(fig, use_container_width=True)
 
-    with tab2:
-        st.subheader("Danh sach goi y san pham cho khach hang (ALS Model)")
+    with t2:
+        st.subheader("Bảng Kết quả Gợi ý Sản phẩm Cá nhân hóa")
         
-        search_cust = st.text_input("Filter theo Customer ID:", "")
-        if search_cust:
-            filtered_recs = recs_df[recs_df['customer_id'].astype(str).str.contains(search_cust)]
-            st.dataframe(filtered_recs, use_container_width=True, hide_index=True)
+        cust_filter = st.text_input("Lọc theo Mã khách hàng (Customer ID):", "")
+        if cust_filter:
+            res_df = recs_df[recs_df['customer_id'].astype(str).str.contains(cust_filter)]
+            st.dataframe(res_df, use_container_width=True, hide_index=True)
         else:
             st.dataframe(recs_df, use_container_width=True, hide_index=True)
 
-    with tab3:
-        st.subheader("GenAI Business Advisor")
+    with t3:
+        st.subheader("Truy vấn Phân tích Kinh doanh (GenAI)")
         
         if not GROQ_API_KEY:
-            st.info("Chua co GROQ_API_KEY trong Streamlit Secrets.")
+            st.warning("Vui lòng cấu hình GROQ_API_KEY trong Streamlit Secrets để truy cập tính năng này.")
         else:
             groq_client = Groq(api_key=GROQ_API_KEY)
             
-            user_query = st.text_area(
-                "Yeu cau phan tich:",
-                value="Dua tren du lieu doanh thu gan day va du bao 30 ngay toi, hay phan tich xu huong va goi y 3 mat hang me can nhap them (Restock) kem ly do.",
+            prompt_input = st.text_area(
+                "Nội dung câu hỏi phân tích:",
+                value="Dựa trên dữ liệu doanh thu gần đây và dự báo 30 ngày tới, hãy phân tích xu hướng và gợi ý các hành động vận hành cần thiết.",
                 height=90
             )
 
-            if st.button("Chay phan tich"):
+            if st.button("Thực hiện phân tích"):
                 recent_summary = sales_df.tail(30).describe().to_string()
                 forecast_summary = forecast_df.head(10).to_string()
                 
-                prompt = f"""
-                Ban la mot chuyên gia phan tich du lieu va chien luoc kinh doanh.
+                full_prompt = f"""
+                Bạn là chuyên gia phân tích dữ liệu kinh doanh thương mại điện tử.
                 
-                Du lieu doanh thu 30 ngay gan nhat:
+                Thống kê doanh thu 30 ngày gần đây:
                 {recent_summary}
                 
-                Du lieu du bao 10 ngay toi:
+                Dự báo doanh thu 10 ngày tới:
                 {forecast_summary}
                 
-                Yeu cau: {user_query}
-                Dua ra nhan xet ngan gon, vao thong so chinh, khong giai thich dong dai.
+                Yêu cầu: {prompt_input}
+                Hãy đưa ra nhận xét ngắn gọn, tập trung vào số liệu thực tế và đề xuất hành động ngắn gọn.
                 """
 
-                with st.spinner("Dang xu ly..."):
+                with st.spinner("Đang truy vấn mô hình LLM..."):
                     try:
                         response = groq_client.chat.completions.create(
-                            messages=[{"role": "user", "content": prompt}],
+                            messages=[{"role": "user", "content": full_prompt}],
                             model="llama3-8b-8192"
                         )
                         st.markdown("---")
                         st.markdown(response.choices[0].message.content)
                     except Exception as ai_err:
-                        st.error(f"Loi truy van Groq API: {ai_err}")
+                        st.error(f"Lỗi truy vấn Groq API: {ai_err}")
 
 except Exception as e:
-    st.error(f"Loi ket noi MotherDuck hoac thuc thi truy van: {e}")
+    st.error(f"Lỗi kết nối MotherDuck hoặc thực thi truy vấn: {e}")
